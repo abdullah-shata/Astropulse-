@@ -7,9 +7,11 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 import hashlib
 import math
+from pathlib import Path
 from typing import List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 try:
     from .schemas import (
@@ -67,6 +69,7 @@ class WebSocketConnectionManager:
 
 
 ws_manager = WebSocketConnectionManager()
+FRONTEND_INDEX = Path(__file__).resolve().parent.parent / "public" / "index.html"
 
 
 @asynccontextmanager
@@ -98,6 +101,8 @@ app.add_middleware(
 
 @app.get("/")
 def root():
+    if FRONTEND_INDEX.is_file():
+        return FileResponse(FRONTEND_INDEX, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
     return {
         "service": "AstroPulse Core Backend",
         "status": "online",
@@ -270,3 +275,13 @@ async def websocket_hud_stream(websocket: WebSocket):
         ws_manager.disconnect(websocket)
     except Exception:
         ws_manager.disconnect(websocket)
+
+
+@app.get("/{frontend_path:path}", include_in_schema=False)
+def frontend_fallback(frontend_path: str):
+    """Serve the Vite SPA for client-side routes after API routes are checked."""
+    if frontend_path in {"api", "ws"} or frontend_path.startswith(("api/", "ws/")):
+        raise HTTPException(status_code=404, detail="Not found")
+    if FRONTEND_INDEX.is_file():
+        return FileResponse(FRONTEND_INDEX, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
+    raise HTTPException(status_code=404, detail="Not found")

@@ -399,8 +399,10 @@ function App() {
     };
     if (IS_GITHUB_PAGES) {
       setConnection('Demo');
-    } else {
+    } else if (import.meta.env.VITE_ENABLE_WEBSOCKET === 'true') {
       connect();
+    } else {
+      setConnection('Polling');
     }
 
     return () => {

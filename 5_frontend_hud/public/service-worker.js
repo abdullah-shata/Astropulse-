@@ -5,7 +5,7 @@
  * Implements offline PWA caching and NASA Delay-Tolerant Networking (DTN) packet buffering.
  */
 
-const CACHE_NAME = "astropulse-dtn-v1";
+const CACHE_NAME = "astropulse-dtn-v2";
 const APP_BASE = new URL(self.registration.scope).pathname;
 const STATIC_ASSETS = [
   APP_BASE,

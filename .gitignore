@@ -8,7 +8,9 @@ __pycache__/
 # Node & Frontend Build Artifacts
 5_frontend_hud/node_modules/
 5_frontend_hud/dist/
+/public/
 node_modules/
+/.npm-cache-deploy/
 dist/
 .vite/
 

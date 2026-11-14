@@ -1,16 +1,23 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm --prefix 5_frontend_hud run build",
-  "outputDirectory": "5_frontend_hud/dist",
-  "installCommand": "npm --prefix 5_frontend_hud ci",
+  "buildCommand": "npm --prefix 5_frontend_hud ci && npm --prefix 5_frontend_hud run build && node scripts/copy-frontend.mjs",
   "functions": {
-    "api/index.py": {
-      "includeFiles": "3_backend_core/**"
+    "main.py": {
+      "includeFiles": "3_backend_core/*.py"
     }
   },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py/api/$1" },
-    { "source": "/ws/(.*)", "destination": "/api/index.py/ws/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "headers": [
+    {
+      "source": "/service-worker.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/api/:path*",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    }
   ]
 }
