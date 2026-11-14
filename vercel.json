@@ -3,13 +3,21 @@
   "services": {
     "backend-core": {
       "root": "3_backend_core",
-      "framework": "fastapi",
-      "routePrefix": "/api"
+      "framework": "fastapi"
     },
     "frontend-hud": {
       "root": "5_frontend_hud",
-      "framework": "vite",
-      "routePrefix": "/"
+      "framework": "vite"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "http://backend-core/api/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "http://frontend-hud/:path*"
+    }
+  ]
 }
