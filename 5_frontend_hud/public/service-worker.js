@@ -53,25 +53,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Handle API telemetry requests during complete signal loss
-  if (url.pathname.startsWith(`${APP_BASE}api/`) || url.pathname.startsWith("/api/")) {
-    event.respondWith(
-      fetch(event.request.clone()).catch(async (error) => {
-        console.warn(`[ServiceWorker] Network error on ${url.pathname}; engaging DTN offline responder.`);
-        return new Response(
-          JSON.stringify({
-            dtn_intercepted: true,
-            status: "buffered_in_dtn_storage",
-            message: "Signal loss detected. Telemetry stored in local autonomous IndexedDB queue.",
-            timestamp: new Date().toISOString(),
-          }),
-          {
-            headers: { "Content-Type": "application/json" },
-            status: 202, // Accepted for deferred processing
-          }
-        );
-      })
-    );
+  // API requests must always reach the server; never cache or synthesize responses.
+  if (url.pathname.startsWith("/api/")) {
     return;
   }
 

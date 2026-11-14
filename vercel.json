@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm --prefix 5_frontend_hud run build",
+  "outputDirectory": "5_frontend_hud/dist",
+  "installCommand": "npm --prefix 5_frontend_hud ci",
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "3_backend_core/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.py/api/$1" },
+    { "source": "/ws/(.*)", "destination": "/api/index.py/ws/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

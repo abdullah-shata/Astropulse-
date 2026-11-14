@@ -14,7 +14,7 @@ import {
 import dtnManager, { DTN_COMM_MODES } from '../../4_offline_dtn_layer/dtn_sync_manager.js';
 import './styles.css';
 
-const API_BASE = import.meta.env.BASE_URL;
+const API_BASE = import.meta.env.VITE_API_URL || '';
 const IS_GITHUB_PAGES = window.location.hostname.endsWith('github.io');
 const CREW = ['ASTRO_01', 'ASTRO_02', 'ASTRO_03', 'ASTRO_04'];
 const LABELS = {
@@ -305,7 +305,7 @@ function App() {
 
     try {
       const responses = await Promise.all(
-        CREW.map((id) => fetch(`${API_BASE}api/history/${id}?limit=60`).then((response) => {
+        CREW.map((id) => fetch(`${API_BASE}/api/history/${id}?limit=60`).then((response) => {
           if (!response.ok) throw new Error('Backend unavailable');
           return response.json();
         }))
@@ -328,7 +328,7 @@ function App() {
   const refreshAlerts = useCallback(async () => {
     if (IS_GITHUB_PAGES) return;
     try {
-      const response = await fetch(`${API_BASE}api/alerts?limit=12`);
+      const response = await fetch(`${API_BASE}/api/alerts?limit=12`);
       if (response.ok) setAlerts((await response.json()).alerts || []);
     } catch {
       // The live stream and next poll will refresh the panel when the link returns.
@@ -355,7 +355,8 @@ function App() {
     const connect = () => {
       if (disposed) return;
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      socket = new WebSocket(`${protocol}//${window.location.host}${API_BASE}ws/live-hud`);
+      const wsBase = import.meta.env.VITE_API_URL || `${protocol}//${window.location.host}`;
+      socket = new WebSocket(`${wsBase.replace(/^http/, 'ws')}/ws/live-hud`);
       socket.onopen = () => {
         setConnection('Live');
         socket.send('ping');

@@ -8,7 +8,7 @@ import sqlite3
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-DB_PATH = Path(__file__).resolve().parent / "astropulse.db"
+DB_PATH = Path("/tmp/astropulse.db") if Path("/var/task").exists() else Path(__file__).resolve().parent / "astropulse.db"
 
 
 def get_connection() -> sqlite3.Connection:
@@ -71,8 +71,6 @@ def init_db():
     conn.close()
 
 
-# Auto-initialize on import so DB tables exist immediately
-init_db()
 
 
 def insert_telemetry(record: Dict[str, Any]) -> int:
