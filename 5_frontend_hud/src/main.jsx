@@ -305,7 +305,7 @@ function App() {
 
     try {
       const responses = await Promise.all(
-        CREW.map((id) => fetch(`${API_BASE}/api/history/${id}?limit=60`).then((response) => {
+        CREW.map((id) => fetch(`${API_BASE}/api/history/${id}?limit=60`, { cache: 'no-store' }).then((response) => {
           if (!response.ok) throw new Error('Backend unavailable');
           return response.json();
         }))
@@ -314,21 +314,25 @@ function App() {
       const nextLatest = {};
       responses.forEach((result, index) => {
         const id = CREW[index];
-        nextHistory[id] = result.history || [];
+        if (!Array.isArray(result.history) || result.history.length === 0) {
+          throw new Error(`Telemetry history missing for ${id}`);
+        }
+        nextHistory[id] = result.history;
         if (nextHistory[id].length) nextLatest[id] = nextHistory[id][nextHistory[id].length - 1];
       });
       setHistory((old) => ({ ...old, ...nextHistory }));
       setLatest((old) => ({ ...old, ...nextLatest }));
       setLastUpdate(new Date());
+      setConnection((old) => (old === 'Live' ? old : 'Polling'));
     } catch {
-      setConnection((old) => (old === 'Live' ? 'Reconnecting' : old));
+      setConnection((old) => (old === 'Live' ? 'Polling' : old));
     }
   }, []);
 
   const refreshAlerts = useCallback(async () => {
     if (IS_GITHUB_PAGES) return;
     try {
-      const response = await fetch(`${API_BASE}/api/alerts?limit=12`);
+      const response = await fetch(`${API_BASE}/api/alerts?limit=12`, { cache: 'no-store' });
       if (response.ok) setAlerts((await response.json()).alerts || []);
     } catch {
       // The live stream and next poll will refresh the panel when the link returns.
@@ -346,17 +350,22 @@ function App() {
   useEffect(() => {
     refresh();
     refreshAlerts();
-    const historyTimer = window.setInterval(refresh, 5000);
-    const alertsTimer = window.setInterval(refreshAlerts, 8000);
+    const historyTimer = window.setInterval(refresh, 2500);
+    const alertsTimer = window.setInterval(refreshAlerts, 3000);
     let socket;
-    let retryTimer;
     let disposed = false;
+    let websocketUnavailable = false;
 
     const connect = () => {
-      if (disposed) return;
+      if (disposed || websocketUnavailable) return;
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsBase = import.meta.env.VITE_API_URL || `${protocol}//${window.location.host}`;
-      socket = new WebSocket(`${wsBase.replace(/^http/, 'ws')}/ws/live-hud`);
+      try {
+        socket = new WebSocket(`${wsBase.replace(/^http/, 'ws')}/ws/live-hud`);
+      } catch {
+        websocketUnavailable = true;
+        return;
+      }
       socket.onopen = () => {
         setConnection('Live');
         socket.send('ping');
@@ -380,10 +389,13 @@ function App() {
       };
       socket.onclose = () => {
         if (disposed) return;
-        setConnection('Reconnecting');
-        retryTimer = window.setTimeout(connect, 1800);
+        websocketUnavailable = true;
+        setConnection((old) => (old === 'Live' ? 'Polling' : old));
       };
-      socket.onerror = () => socket.close();
+      socket.onerror = () => {
+        websocketUnavailable = true;
+        socket.close();
+      };
     };
     if (IS_GITHUB_PAGES) {
       setConnection('Demo');
@@ -395,7 +407,6 @@ function App() {
       disposed = true;
       window.clearInterval(historyTimer);
       window.clearInterval(alertsTimer);
-      window.clearTimeout(retryTimer);
       socket?.close();
     };
   }, [refresh, refreshAlerts]);

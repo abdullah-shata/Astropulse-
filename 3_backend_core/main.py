@@ -187,8 +187,11 @@ def get_astronaut_history(astronaut_id: str, limit: int = Query(50, ge=1, le=500
         history = get_recent_history(astronaut_id=astronaut_id, limit=limit)
     except Exception:
         history = []
-    # The serverless filesystem is ephemeral; always include a fresh sample per request.
-    history = (history + generate_live_history(astronaut_id, 1))[-limit:]
+    # Cold instances have no durable database; seed a full chart and refresh its newest point.
+    if not history:
+        history = generate_live_history(astronaut_id, limit)
+    else:
+        history = (history + generate_live_history(astronaut_id, 1))[-limit:]
     return {
         "astronaut_id": astronaut_id,
         "count": len(history),
