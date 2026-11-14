@@ -3,7 +3,7 @@
   "buildCommand": "npm --prefix 5_frontend_hud ci && npm --prefix 5_frontend_hud run build && node scripts/copy-frontend.mjs",
   "functions": {
     "main.py": {
-      "includeFiles": "3_backend_core/*.py"
+      "includeFiles": "{3_backend_core/*.py,public/**}"
     }
   },
   "headers": [

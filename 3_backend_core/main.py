@@ -69,7 +69,8 @@ class WebSocketConnectionManager:
 
 
 ws_manager = WebSocketConnectionManager()
-FRONTEND_INDEX = Path(__file__).resolve().parent.parent / "public" / "index.html"
+FRONTEND_PUBLIC = Path(__file__).resolve().parent.parent / "public"
+FRONTEND_INDEX = FRONTEND_PUBLIC / "index.html"
 
 
 @asynccontextmanager
@@ -282,6 +283,20 @@ def frontend_fallback(frontend_path: str):
     """Serve the Vite SPA for client-side routes after API routes are checked."""
     if frontend_path in {"api", "ws"} or frontend_path.startswith(("api/", "ws/")):
         raise HTTPException(status_code=404, detail="Not found")
+    requested_file = (FRONTEND_PUBLIC / frontend_path).resolve()
+    try:
+        requested_file.relative_to(FRONTEND_PUBLIC.resolve())
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Not found")
+    if requested_file.is_file():
+        cache_control = (
+            "no-cache, no-store, must-revalidate"
+            if requested_file.name in {"index.html", "service-worker.js"}
+            else "public, max-age=31536000, immutable"
+            if requested_file.parent.name == "assets"
+            else "public, max-age=3600"
+        )
+        return FileResponse(requested_file, headers={"Cache-Control": cache_control})
     if FRONTEND_INDEX.is_file():
         return FileResponse(FRONTEND_INDEX, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
     raise HTTPException(status_code=404, detail="Not found")
