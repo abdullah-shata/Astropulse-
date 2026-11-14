@@ -1,1 +1,3 @@
--r 3_backend_core/requirements.txt
+fastapi==0.115.12
+pydantic==2.11.3
+uvicorn==0.34.0
