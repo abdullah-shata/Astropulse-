@@ -6,11 +6,12 @@
  */
 
 const CACHE_NAME = "astropulse-dtn-v1";
+const APP_BASE = new URL(self.registration.scope).pathname;
 const STATIC_ASSETS = [
-  "/",
-  "/index.html",
-  "/favicon.ico",
-  "/manifest.json",
+  APP_BASE,
+  `${APP_BASE}index.html`,
+  `${APP_BASE}favicon.svg`,
+  `${APP_BASE}manifest.json`,
 ];
 
 // Install: Pre-cache static HUD shell
@@ -53,7 +54,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Handle API telemetry requests during complete signal loss
-  if (url.pathname.startsWith("/api/")) {
+  if (url.pathname.startsWith(`${APP_BASE}api/`) || url.pathname.startsWith("/api/")) {
     event.respondWith(
       fetch(event.request.clone()).catch(async (error) => {
         console.warn(`[ServiceWorker] Network error on ${url.pathname}; engaging DTN offline responder.`);

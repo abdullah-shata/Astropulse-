@@ -1,12 +1,12 @@
 {
   "name": "AstroPulse Mission Control",
   "short_name": "AstroPulse",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#080d16",
   "theme_color": "#102335",
   "icons": [{
-    "src": "/favicon.svg",
+    "src": "./favicon.svg",
     "sizes": "any",
     "type": "image/svg+xml",
     "purpose": "any maskable"
