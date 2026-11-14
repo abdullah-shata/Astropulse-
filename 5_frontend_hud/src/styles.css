@@ -175,6 +175,7 @@ a { text-decoration: none; }
 .connection { display: inline-flex; align-items: center; gap: 7px; color: #D5E4F4; font: 9px var(--mono); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
 .connection i,.live-dot,.realtime-chip i,.readiness-badge i { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--teal); box-shadow: 0 0 10px rgba(94,242,208,.8); animation: live-pulse 1.8s ease-in-out infinite; }
 .connection.reconnecting i,.connection.connecting i { background: var(--amber); box-shadow: 0 0 10px rgba(251,191,36,.65); }
+.connection.demo i { background: var(--cyan); box-shadow: 0 0 10px rgba(56,189,248,.65); animation: none; }
 
 .unified-dashboard { display: flex; flex-direction: column; gap: 0; }
 .unified-dashboard > .section-heading { margin-top: 15px; margin-bottom: 9px; }

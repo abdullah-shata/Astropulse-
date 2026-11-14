@@ -15,6 +15,7 @@ import dtnManager, { DTN_COMM_MODES } from '../../4_offline_dtn_layer/dtn_sync_m
 import './styles.css';
 
 const API_BASE = import.meta.env.BASE_URL;
+const IS_GITHUB_PAGES = window.location.hostname.endsWith('github.io');
 const CREW = ['ASTRO_01', 'ASTRO_02', 'ASTRO_03', 'ASTRO_04'];
 const LABELS = {
   ASTRO_01: 'Crew member 01',
@@ -277,8 +278,31 @@ function App() {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [commMode, setCommMode] = useState(dtnManager.getCommMode());
   const [queueCount, setQueueCount] = useState(0);
+  const demoLoadedRef = useRef(false);
 
   const refresh = useCallback(async () => {
+    if (IS_GITHUB_PAGES) {
+      if (demoLoadedRef.current) return;
+      try {
+        const response = await fetch(`${API_BASE}demo-telemetry.json`);
+        if (!response.ok) throw new Error('Demo telemetry unavailable');
+        const demo = await response.json();
+        const nextHistory = demo.history || {};
+        const nextLatest = Object.fromEntries(
+          Object.entries(nextHistory).map(([id, samples]) => [id, samples.at(-1)]).filter(([, sample]) => sample)
+        );
+        setHistory(nextHistory);
+        setLatest(nextLatest);
+        setAlerts(demo.alerts || []);
+        setLastUpdate(new Date());
+        setConnection('Demo');
+        demoLoadedRef.current = true;
+      } catch {
+        setConnection('Offline');
+      }
+      return;
+    }
+
     try {
       const responses = await Promise.all(
         CREW.map((id) => fetch(`${API_BASE}api/history/${id}?limit=60`).then((response) => {
@@ -302,6 +326,7 @@ function App() {
   }, []);
 
   const refreshAlerts = useCallback(async () => {
+    if (IS_GITHUB_PAGES) return;
     try {
       const response = await fetch(`${API_BASE}api/alerts?limit=12`);
       if (response.ok) setAlerts((await response.json()).alerts || []);
@@ -359,8 +384,8 @@ function App() {
       };
       socket.onerror = () => socket.close();
     };
-    if (window.location.hostname.endsWith('github.io')) {
-      setConnection('Offline');
+    if (IS_GITHUB_PAGES) {
+      setConnection('Demo');
     } else {
       connect();
     }
@@ -443,7 +468,7 @@ function App() {
           <div className="mission-meta">
             <span className="met"><small>MET</small><b>D+{fmt(missionDay, 0)}</b></span>
             <span className="utc-clock"><small>DATE / UTC</small><b>{utcDate} UTC</b></span>
-            <span className="realtime-chip"><i /> REAL-TIME</span>
+            <span className="realtime-chip"><i /> {IS_GITHUB_PAGES ? 'DEMO SNAPSHOT' : 'REAL-TIME'}</span>
             <div className="updated"><span>LAST UPDATE</span><strong>{lastUpdate ? lastUpdate.toLocaleTimeString() : 'Awaiting telemetry'}</strong></div>
           </div>
         </section>
